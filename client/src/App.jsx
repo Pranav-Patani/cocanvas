@@ -1,7 +1,9 @@
+import CanvasBoard from "./canvas/CanvasBoard.jsx";
+
 function App() {
   return (
     <>
-      <h1>CoCanvas - collaborate in real-time</h1>
+      <CanvasBoard />
     </>
   );
 }
