@@ -32,9 +32,24 @@ class SocketClient {
     });
   }
 
+  emitCursorMove(point) {
+    if (!this.socket) return;
+
+    this.socket.emit("cursor-move", {
+      userId: this.userId,
+      point,
+      timestamp: Date.now(),
+    });
+  }
+
   onDrawAction(callback) {
     if (!this.socket) return;
     this.socket.on("draw-action", callback);
+  }
+
+  onCursorMove(callback) {
+    if (!this.socket) return;
+    this.socket.on("cursor-move", callback);
   }
 
   onCanvasState(callback) {

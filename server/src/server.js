@@ -33,6 +33,14 @@ io.on("connection", (socket) => {
     });
   });
 
+  socket.on("cursor-move", (data) => {
+    socket.to(roomId).emit("cursor-move", {
+      userId,
+      point: data.point,
+      timestamp: data.timestamp,
+    });
+  });
+
   socket.on("disconnect", () => {
     console.log(`User ${userId} disconnected`);
     roomManager.removeUser(roomId, userId);

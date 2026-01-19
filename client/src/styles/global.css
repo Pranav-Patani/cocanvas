@@ -98,3 +98,25 @@ body,
 .tool-button.active {
   background-color: var(--dark-secondary-color);
 }
+
+/* Remote Cursor */
+
+.remote-cursor {
+  position: absolute;
+  z-index: 100;
+  pointer-events: none;
+}
+
+.remote-cursor-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: red;
+  border: 2px solid white;
+}
+
+.remote-cursor-label {
+  font-size: 10px;
+  margin-left: 15px;
+  color: red;
+}

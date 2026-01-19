@@ -5,6 +5,7 @@ import {
   getCanvasPoint,
 } from "./canvasEngine.js";
 import ToolBox from "../components/ToolBox.jsx";
+import RemoteCursors from "../components/RemoteCursors.jsx";
 import { createTool, TOOL_TYPES } from "./tools.js";
 import socketClient from "../socket/socketClient.js";
 
@@ -14,6 +15,8 @@ export default function CanvasBoard() {
   const toolRef = useRef(null);
   const isDrawingRef = useRef(false);
   const lastPointRef = useRef(null);
+
+  const [remoteCursors, setRemoteCursors] = useState(new Map());
 
   const [toolType, setToolType] = useState(TOOL_TYPES.BRUSH);
   const [color, setColor] = useState("#000");
@@ -62,13 +65,34 @@ export default function CanvasBoard() {
     socketClient.connect();
 
     socketClient.onDrawAction((action) => {
-      if (action.userId === socketClient.userId) return; // Ignore own actions
+      if (action.userId === socketClient.userId) return;
 
       applyRemoteAction(action);
     });
 
     socketClient.onCanvasState((state) => {
       state.actions.forEach((action) => applyRemoteAction(action));
+    });
+
+    socketClient.onCursorMove((data) => {
+      setRemoteCursors((prev) => {
+        const updated = new Map(prev);
+        updated.set(data.userId, {
+          point: data.point,
+          timestamp: data.timestamp,
+        });
+        return updated;
+      });
+
+      setTimeout(() => {
+        setRemoteCursors((prev) => {
+          const updated = new Map(prev);
+          if (updated.get(data.userId)?.timestamp === data.timestamp) {
+            updated.delete(data.userId);
+          }
+          return updated;
+        });
+      }, 2000);
     });
 
     return () => {
@@ -99,13 +123,18 @@ export default function CanvasBoard() {
       toolType,
       point,
       config: { color, width },
+      actionId: null,
     });
   };
 
   const handlePointerMove = (e) => {
-    if (!isDrawingRef.current || !toolRef.current) return;
+    if (!toolRef.current) return;
 
     const point = getCanvasPoint(e, canvasRef.current);
+
+    socketClient.emitCursorMove(point);
+    if (!isDrawingRef.current) return;
+
     toolRef.current.onMove(point);
 
     socketClient.emitDrawAction({
@@ -167,6 +196,8 @@ export default function CanvasBoard() {
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerUp}
       />
+
+      <RemoteCursors remoteCursors={remoteCursors} />
     </div>
   );
 }
