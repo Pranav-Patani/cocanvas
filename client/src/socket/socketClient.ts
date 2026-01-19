@@ -1,5 +1,13 @@
 import { io, Socket } from "socket.io-client";
-import { DrawAction, CursorData, CanvasState, Point } from "../types/allTypes";
+import {
+  DrawAction,
+  CursorData,
+  CanvasState,
+  Point,
+  UserJoinedPayload,
+  UserLeftPayload,
+  UserData,
+} from "../types/allTypes";
 
 class SocketClient {
   socket: Socket | null;
@@ -59,6 +67,21 @@ class SocketClient {
   onCanvasState(callback: (state: CanvasState) => void) {
     if (!this.socket) return;
     this.socket.on("canvas-state", callback);
+  }
+
+  onUserJoined(callback: (data: UserJoinedPayload) => void): void {
+    if (!this.socket) return;
+    this.socket.on("user-joined", callback);
+  }
+
+  onUserLeft(callback: (data: UserLeftPayload) => void): void {
+    if (!this.socket) return;
+    this.socket.on("user-left", callback);
+  }
+
+  onUsersUpdate(callback: (users: UserData[]) => void): void {
+    if (!this.socket) return;
+    this.socket.on("users-update", callback);
   }
 
   disconnect() {

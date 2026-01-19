@@ -5,7 +5,7 @@ class RoomManager {
     this.rooms = new Map();
   }
 
-  addUser(roomId, userId, socketId) {
+  addUser(roomId, userId, socketId, color) {
     if (!this.rooms.has(roomId)) {
       this.rooms.set(roomId, {
         users: new Map(),
@@ -18,6 +18,7 @@ class RoomManager {
     const room = this.rooms.get(roomId);
     room.users.set(userId, {
       socketId,
+      color,
       joinedAt: Date.now(),
     });
 
@@ -39,6 +40,17 @@ class RoomManager {
       this.rooms.delete(roomId);
       console.log(`Room ${roomId} destroyed (no users remaining)`);
     }
+  }
+
+  getUsers(roomId) {
+    const room = this.rooms.get(roomId);
+    if (!room) return [];
+
+    return Array.from(room.users.entries()).map(([userId, userData]) => ({
+      userId,
+      color: userData.color,
+      joinedAt: userData.joinedAt,
+    }));
   }
 
   addAction(roomId, action) {

@@ -1,13 +1,14 @@
 :root {
   --primary-color: rgb(250, 250, 250); /* Zinc 1 */
 
-  --text-color: rgb(24, 24, 27); /* Zinc 10 */
+  --text-color: oklch(37% 0.013 285.805); /* Zinc 8 */
   --text-color-light: rgb(244, 244, 245); /* Zinc 2 */
 
   --secondary-color: oklch(91.7% 0.08 205.041); /* Cyan 3 */
   --dark-secondary-color: oklch(78.9% 0.154 211.53); /* Cyan 5 */
 
-  --tool-box-bg: rgb(228, 228, 231); /* Zinc 3 */
+  --tool-box-bg: rgb(250, 250, 250); /* Zinc 1 */
+  --shadow-dark: rgba(0, 0, 0, 0.15);
 }
 
 /* Global Styles */
@@ -73,6 +74,7 @@ body,
   flex-direction: column;
   gap: 1rem;
   background: var(--tool-box-bg);
+  box-shadow: 0 0.2rem 1.2rem var(--shadow-dark);
   padding: 1rem;
   border-radius: 0 0 0.5rem 0;
   position: absolute;
@@ -92,7 +94,7 @@ body,
 .tool-button {
   padding: 0.2rem 0.5rem;
   background-color: var(--secondary-color);
-  border: 1px solid var(--text-color);
+  border: 0.1rem solid var(--text-color);
   cursor: pointer;
 }
 .tool-button.active {
@@ -108,15 +110,74 @@ body,
 }
 
 .remote-cursor-dot {
-  width: 12px;
-  height: 12px;
+  width: 1.2rem;
+  height: 1.2rem;
   border-radius: 50%;
-  background-color: red;
-  border: 2px solid white;
 }
 
 .remote-cursor-label {
-  font-size: 10px;
-  margin-left: 15px;
-  color: red;
+  font-size: 1rem;
+  margin-left: 1.5rem;
+  color: var(--text-color-light);
+}
+
+/* Active Users */
+
+.active-users-container {
+  position: absolute;
+  top: 31rem;
+  left: 0;
+  background: var(--tool-box-bg);
+  box-shadow: 0 0.2rem 1.2rem var(--shadow-dark);
+  padding: 1rem;
+  border-radius: 0 0 0.5rem 0;
+  z-index: 100;
+  width: 20rem;
+  max-height: 30rem;
+  overflow-y: auto;
+}
+
+.active-users-heading {
+  margin: 0 0 1.2rem 0;
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--text-color);
+  border-bottom: 0.1rem solid var(--secondary-color);
+  padding-bottom: 0.8rem;
+}
+
+.active-users-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.active-users-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.6rem 0.8rem;
+  border-radius: 0.4rem;
+}
+
+.active-users-color-indicator {
+  width: 1.2rem;
+  height: 1.2rem;
+  border-radius: 50%;
+  border: 0.2rem solid var(--primary-color);
+  flex-shrink: 0;
+}
+
+.active-users-id {
+  font-size: 1.2rem;
+  color: var(--text-color);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.active-users-current {
+  font-size: 1rem;
+  color: var(--dark-secondary-color);
+  margin-left: 0.4rem;
 }

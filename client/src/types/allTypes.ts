@@ -70,4 +70,26 @@ export interface ToolBoxProps {
 
 export interface RemoteCursorsProps {
   remoteCursors: Map<string, RemoteCursorState>;
+  activeUsers: UserData[];
+}
+
+// ============================================
+// USER MANAGEMENT TYPES
+// ============================================
+
+export interface UserData {
+  userId: string;
+  color: string;
+  joinedAt: number;
+}
+
+export interface UserJoinedPayload {
+  userId: string;
+  color: string;
+  timestamp: number;
+}
+
+export interface UserLeftPayload {
+  userId: string;
+  timestamp: number;
 }

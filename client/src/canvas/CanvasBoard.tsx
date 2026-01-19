@@ -13,7 +13,9 @@ import {
   Point,
   RemoteCursorState,
   Tool,
+  UserData,
 } from "../types/allTypes.js";
+import ActiveUsers from "../components/ActiveUsers.js";
 
 export default function CanvasBoard() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -25,6 +27,7 @@ export default function CanvasBoard() {
   const [remoteCursors, setRemoteCursors] = useState<
     Map<string, RemoteCursorState>
   >(new Map());
+  const [activeUsers, setActiveUsers] = useState<UserData[]>([]);
 
   const [toolType, setToolType] = useState<string>(TOOL_TYPES.BRUSH);
   const [color, setColor] = useState<string>("#000");
@@ -104,6 +107,32 @@ export default function CanvasBoard() {
           return updated;
         });
       }, 2000);
+    });
+
+    socketClient.onUserJoined((data) => {
+      console.log("User joined:", data);
+      setActiveUsers((prev) => {
+        if (prev.some((u) => u.userId === data.userId)) return prev;
+        return [
+          ...prev,
+          { userId: data.userId, color: data.color, joinedAt: data.timestamp },
+        ];
+      });
+    });
+
+    socketClient.onUserLeft((data) => {
+      console.log("User left:", data);
+      setActiveUsers((prev) => prev.filter((u) => u.userId !== data.userId));
+      setRemoteCursors((prev) => {
+        const updated = new Map(prev);
+        updated.delete(data.userId);
+        return updated;
+      });
+    });
+
+    socketClient.onUsersUpdate((users) => {
+      console.log("Users update:", users);
+      setActiveUsers(users);
     });
 
     return () => {
@@ -208,7 +237,9 @@ export default function CanvasBoard() {
         onPointerCancel={handlePointerUp}
       />
 
-      <RemoteCursors remoteCursors={remoteCursors} />
+      <ActiveUsers users={activeUsers} />
+
+      <RemoteCursors remoteCursors={remoteCursors} activeUsers={activeUsers} />
     </div>
   );
 }
