@@ -1,6 +1,10 @@
-import { io } from "socket.io-client";
+import { io, Socket } from "socket.io-client";
+import { DrawAction, CursorData, CanvasState, Point } from "../types/allTypes";
 
 class SocketClient {
+  socket: Socket | null;
+  userId: string;
+
   constructor() {
     this.socket = null;
     this.userId = this.generateUserId();
@@ -10,7 +14,7 @@ class SocketClient {
     return `user_${Math.random().toString(36).substr(2, 9)}`;
   }
 
-  connect(roomId = "default") {
+  connect(roomId: string = "default") {
     this.socket = io("http://localhost:8000", {
       query: { roomId, userId: this.userId },
     });
@@ -22,7 +26,7 @@ class SocketClient {
     return this.socket;
   }
 
-  emitDrawAction(action) {
+  emitDrawAction(action: DrawAction) {
     if (!this.socket) return;
 
     this.socket.emit("draw-action", {
@@ -32,7 +36,7 @@ class SocketClient {
     });
   }
 
-  emitCursorMove(point) {
+  emitCursorMove(point: Point) {
     if (!this.socket) return;
 
     this.socket.emit("cursor-move", {
@@ -42,17 +46,17 @@ class SocketClient {
     });
   }
 
-  onDrawAction(callback) {
+  onDrawAction(callback: (action: DrawAction) => void) {
     if (!this.socket) return;
     this.socket.on("draw-action", callback);
   }
 
-  onCursorMove(callback) {
+  onCursorMove(callback: (data: CursorData) => void) {
     if (!this.socket) return;
     this.socket.on("cursor-move", callback);
   }
 
-  onCanvasState(callback) {
+  onCanvasState(callback: (state: CanvasState) => void) {
     if (!this.socket) return;
     this.socket.on("canvas-state", callback);
   }

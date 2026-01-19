@@ -4,25 +4,33 @@ import {
   resizeCanvasToDisplaySize,
   getCanvasPoint,
 } from "./canvasEngine.js";
-import ToolBox from "../components/ToolBox.jsx";
-import RemoteCursors from "../components/RemoteCursors.jsx";
+import ToolBox from "../components/ToolBox.js";
+import RemoteCursors from "../components/RemoteCursors.js";
 import { createTool, TOOL_TYPES } from "./tools.js";
 import socketClient from "../socket/socketClient.js";
+import {
+  DrawAction,
+  Point,
+  RemoteCursorState,
+  Tool,
+} from "../types/allTypes.js";
 
 export default function CanvasBoard() {
-  const canvasRef = useRef(null);
-  const ctxRef = useRef(null);
-  const toolRef = useRef(null);
-  const isDrawingRef = useRef(false);
-  const lastPointRef = useRef(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
+  const toolRef = useRef<Tool | null>(null);
+  const isDrawingRef = useRef<boolean>(false);
+  const lastPointRef = useRef<Point | null>(null);
 
-  const [remoteCursors, setRemoteCursors] = useState(new Map());
+  const [remoteCursors, setRemoteCursors] = useState<
+    Map<string, RemoteCursorState>
+  >(new Map());
 
-  const [toolType, setToolType] = useState(TOOL_TYPES.BRUSH);
-  const [color, setColor] = useState("#000");
-  const [width, setWidth] = useState(6);
+  const [toolType, setToolType] = useState<string>(TOOL_TYPES.BRUSH);
+  const [color, setColor] = useState<string>("#000");
+  const [width, setWidth] = useState<number>(6);
 
-  const applyRemoteAction = (action) => {
+  const applyRemoteAction = (action: DrawAction) => {
     if (!ctxRef.current) return;
 
     const ctx = ctxRef.current;
@@ -39,7 +47,7 @@ export default function CanvasBoard() {
         }
         break;
       case "end":
-        remoteTool.onEnd(action.point);
+        remoteTool.onEnd();
         break;
     }
   };
@@ -47,7 +55,10 @@ export default function CanvasBoard() {
   // Initialize canvas
   useEffect(() => {
     const canvas = canvasRef.current;
+    if (!canvas) return;
+
     const ctx = canvas.getContext("2d");
+    if (!ctx) return;
     ctxRef.current = ctx;
 
     const resize = () => {
@@ -106,8 +117,8 @@ export default function CanvasBoard() {
     toolRef.current = createTool(toolType, ctxRef.current, { color, width });
   }, [toolType, color, width]);
 
-  const handlePointerDown = (e) => {
-    if (!toolRef.current) return;
+  const handlePointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (!toolRef.current || !canvasRef.current) return;
 
     e.preventDefault();
     e.currentTarget.setPointerCapture(e.pointerId);
@@ -127,8 +138,8 @@ export default function CanvasBoard() {
     });
   };
 
-  const handlePointerMove = (e) => {
-    if (!toolRef.current) return;
+  const handlePointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (!toolRef.current || !canvasRef.current) return;
 
     const point = getCanvasPoint(e, canvasRef.current);
 
@@ -148,11 +159,11 @@ export default function CanvasBoard() {
     lastPointRef.current = point;
   };
 
-  const handlePointerUp = (e) => {
-    if (!toolRef.current) return;
+  const handlePointerUp = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (!toolRef.current || !canvasRef.current) return;
 
     const point = getCanvasPoint(e, canvasRef.current);
-    toolRef.current.onEnd(point);
+    toolRef.current.onEnd();
     isDrawingRef.current = false;
 
     socketClient.emitDrawAction({

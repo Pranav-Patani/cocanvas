@@ -1,19 +1,26 @@
 // src/canvas/tools/tools.js
 
 import { drawDot, drawSegment } from "./canvasEngine.js";
+import { Point, ToolConfig, Tool } from "../types/allTypes.js";
 
 export const TOOL_TYPES = {
   BRUSH: "brush",
   ERASER: "eraser",
 };
 
-function applyBrushStyle(ctx, { color, width }) {
+function applyBrushStyle(
+  ctx: CanvasRenderingContext2D,
+  { color, width }: ToolConfig,
+) {
   ctx.globalCompositeOperation = "source-over";
   ctx.strokeStyle = color;
   ctx.lineWidth = width;
 }
 
-function applyEraserStyle(ctx, { width }) {
+function applyEraserStyle(
+  ctx: CanvasRenderingContext2D,
+  { width }: ToolConfig,
+) {
   ctx.globalCompositeOperation = "destination-out";
   ctx.strokeStyle = "rgba(0,0,0,1)";
   ctx.lineWidth = width;
@@ -23,19 +30,23 @@ function applyEraserStyle(ctx, { width }) {
   Tools are plain objects. They can keep their own internal state via closure variables (lastPoint, startPoint, etc.)
 */
 
-export function createTool(toolType, ctx, config) {
+export function createTool(
+  toolType: string,
+  ctx: CanvasRenderingContext2D,
+  config: ToolConfig,
+) {
   if (!ctx) throw new Error("ctx required");
 
-  let lastPoint = null;
+  let lastPoint: Point | null = null;
 
-  const eraserConfig = {
+  const eraserConfig: Tool = {
     type: TOOL_TYPES.ERASER,
-    onStart(point) {
+    onStart(point: Point) {
       applyEraserStyle(ctx, config);
       lastPoint = point;
       drawDot(ctx, point);
     },
-    onMove(point) {
+    onMove(point: Point) {
       if (!lastPoint) return;
       drawSegment(ctx, lastPoint, point);
       lastPoint = point;
@@ -48,14 +59,14 @@ export function createTool(toolType, ctx, config) {
     },
   };
 
-  const brushConfig = {
+  const brushConfig: Tool = {
     type: TOOL_TYPES.BRUSH,
-    onStart(point) {
+    onStart(point: Point) {
       applyBrushStyle(ctx, config);
       lastPoint = point;
       drawDot(ctx, point);
     },
-    onMove(point) {
+    onMove(point: Point) {
       if (!lastPoint) return;
       drawSegment(ctx, lastPoint, point);
       lastPoint = point;

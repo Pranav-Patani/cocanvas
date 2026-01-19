@@ -1,4 +1,5 @@
 import { TOOL_TYPES } from "../canvas/tools.js";
+import { ToolBoxProps } from "../types/allTypes.js";
 
 export default function ToolBox({
   toolType,
@@ -7,7 +8,7 @@ export default function ToolBox({
   setColor,
   width,
   setWidth,
-}) {
+}: ToolBoxProps) {
   return (
     <div className="tool-box">
       <div className="tool-options">

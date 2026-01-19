@@ -1,4 +1,6 @@
-export default function RemoteCursors({ remoteCursors }) {
+import { RemoteCursorsProps } from "../types/allTypes";
+
+export default function RemoteCursors({ remoteCursors }: RemoteCursorsProps) {
   return (
     <>
       {Array.from(remoteCursors.entries()).map(([userId, data]) => {
