@@ -7,7 +7,13 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173",
+    origin: [
+      "http://localhost:5173",
+      "http://192.168.1.0/24", // Allow entire local network
+      /^http:\/\/192\.168\.\d+\.\d+:5173$/,
+      /^http:\/\/10\.\d+\.\d+\.\d+:5173$/,
+      /^http:\/\/172\.(1[6-9]|2[0-9]|3[0-1])\.\d+\.\d+:5173$/,
+    ],
   },
 });
 
@@ -87,6 +93,34 @@ io.on("connection", (socket) => {
     }
   });
 
+  socket.on("draw-action-batch", (batch) => {
+    const processedActions = [];
+
+    batch.actions.forEach((action) => {
+      const fullAction = { ...action, userId };
+      const actionId = roomManager.addAction(roomId, fullAction);
+
+      processedActions.push({
+        ...fullAction,
+        actionId,
+      });
+    });
+
+    socket.to(roomId).emit("draw-action-batch", {
+      actions: processedActions,
+      batchId: batch.batchId,
+    });
+
+    const hasEndAction = batch.actions.some((action) => action.type === "end");
+    if (hasEndAction) {
+      const state = roomManager.getCanvasState(roomId);
+      socket.to(roomId).emit("state-update", {
+        canUndo: state.canUndo,
+        canRedo: state.canRedo,
+      });
+    }
+  });
+
   socket.on("cursor-move", (data) => {
     socket.to(roomId).emit("cursor-move", {
       userId,
@@ -107,6 +141,10 @@ io.on("connection", (socket) => {
 
   socket.on("disconnect", () => {
     console.log(`User ${userId} disconnected`);
+    const room = roomManager.rooms.get(roomId);
+    if (room) {
+      room.drawingState.finalizeIncompleteStroke();
+    }
     roomManager.removeUser(roomId, userId);
     socket.to(roomId).emit("user-left", {
       userId,

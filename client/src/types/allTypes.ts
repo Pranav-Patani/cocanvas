@@ -34,6 +34,7 @@ export interface Tool {
   onMove: (point: Point) => void;
   onEnd: () => void;
   onCancel?: () => void;
+  replayStroke?: (points: Point[]) => void;
 }
 
 // ============================================

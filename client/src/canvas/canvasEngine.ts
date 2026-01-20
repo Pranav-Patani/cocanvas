@@ -1,5 +1,3 @@
-// src/canvas/canvasEngine.js
-
 import { Point } from "../types/allTypes";
 
 export function initContext(ctx: CanvasRenderingContext2D) {
@@ -7,7 +5,10 @@ export function initContext(ctx: CanvasRenderingContext2D) {
   ctx.lineJoin = "round";
 }
 
-export function resizeCanvasToDisplaySize(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) {
+export function resizeCanvasToDisplaySize(
+  canvas: HTMLCanvasElement,
+  ctx: CanvasRenderingContext2D,
+) {
   const dpr = window.devicePixelRatio || 1;
   const rect = canvas.getBoundingClientRect();
 
@@ -17,15 +18,34 @@ export function resizeCanvasToDisplaySize(canvas: HTMLCanvasElement, ctx: Canvas
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 }
 
-export function getCanvasPoint(e: React.PointerEvent<HTMLCanvasElement>, canvas: HTMLCanvasElement) {
+export function getCanvasPoint(
+  e: React.PointerEvent<HTMLCanvasElement>,
+  canvas: HTMLCanvasElement,
+) {
   const rect = canvas.getBoundingClientRect();
   return { x: e.clientX - rect.left, y: e.clientY - rect.top, t: Date.now() };
 }
 
-export function drawSegment(ctx: CanvasRenderingContext2D, from: Point, to: Point) {
+export function drawBatchedSegments(
+  ctx: CanvasRenderingContext2D,
+  points: Point[],
+) {
+  if (points.length < 2) return;
+
   ctx.beginPath();
-  ctx.moveTo(from.x, from.y);
-  ctx.lineTo(to.x, to.y);
+  ctx.moveTo(points[0].x, points[0].y);
+
+  for (let i = 1; i < points.length - 1; i++) {
+    const currentPoint = points[i];
+    const nextPoint = points[i + 1];
+    const midX = (currentPoint.x + nextPoint.x) / 2;
+    const midY = (currentPoint.y + nextPoint.y) / 2;
+
+    ctx.quadraticCurveTo(currentPoint.x, currentPoint.y, midX, midY);
+  }
+
+  const lastPoint = points[points.length - 1];
+  ctx.lineTo(lastPoint.x, lastPoint.y);
   ctx.stroke();
 }
 

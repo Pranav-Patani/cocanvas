@@ -27,7 +27,12 @@ class SocketClient {
   }
 
   connect(roomId: string = "default") {
-    this.socket = io("http://localhost:8000", {
+    const serverUrl =
+      window.location.hostname === "localhost"
+        ? "http://localhost:8000"
+        : `http://${window.location.hostname}:8000`;
+
+    this.socket = io(serverUrl, {
       query: { roomId },
     });
     this.userId = this.socket.id;
@@ -51,6 +56,18 @@ class SocketClient {
     return this.socket;
   }
 
+  emitDrawActionBatch(actions: DrawAction[]) {
+    if (!this.socket || actions.length === 0) return;
+
+    this.socket.emit("draw-action-batch", {
+      actions: actions.map((action) => ({
+        ...action,
+        timestamp: action.timestamp || Date.now(),
+      })),
+      batchId: `${this.userId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    });
+  }
+
   emitDrawAction(action: DrawAction) {
     if (!this.socket) return;
 
@@ -67,6 +84,13 @@ class SocketClient {
       point,
       timestamp: Date.now(),
     });
+  }
+
+  onDrawActionBatch(
+    callback: (batch: { actions: DrawAction[]; batchId: string }) => void,
+  ) {
+    if (!this.socket) return;
+    this.socket.on("draw-action-batch", callback);
   }
 
   onDrawAction(callback: (action: DrawAction) => void) {
@@ -106,6 +130,7 @@ class SocketClient {
 
   emitRedo() {
     if (!this.socket) return;
+
     this.socket.emit("redo");
   }
 

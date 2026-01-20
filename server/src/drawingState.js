@@ -105,6 +105,13 @@ class DrawingState {
     };
   }
 
+  finalizeIncompleteStroke() {
+    if (this.currentStroke && this.currentStroke.actions.length > 0) {
+      this.strokes.push(this.currentStroke);
+      this.currentStroke = null;
+    }
+  }
+
   clear() {
     this.actions = [];
     this.undoneActions = [];

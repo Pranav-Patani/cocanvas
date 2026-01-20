@@ -1,4 +1,4 @@
-import CanvasBoard from "./canvas/CanvasBoard.jsx";
+import CanvasBoard from "./canvas/CanvasBoard";
 
 function App() {
   return (

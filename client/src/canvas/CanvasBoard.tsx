@@ -1,21 +1,22 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import {
   initContext,
   resizeCanvasToDisplaySize,
   getCanvasPoint,
-} from "./canvasEngine.js";
-import ToolBox from "../components/ToolBox.js";
-import RemoteCursors from "../components/RemoteCursors.js";
-import { createTool, TOOL_TYPES } from "./tools.js";
-import socketClient from "../socket/socketClient.js";
+} from "./canvasEngine";
+import ToolBox from "../components/ToolBox";
+import RemoteCursors from "../components/RemoteCursors";
+import { createTool, TOOL_TYPES } from "./tools";
+import socketClient from "../socket/socketClient";
+import { PERFORMANCE_CONFIG } from "../config/performance";
 import {
   DrawAction,
   Point,
   RemoteCursorState,
   Tool,
   UserData,
-} from "../types/allTypes.js";
-import ActiveUsers from "../components/ActiveUsers.js";
+} from "../types/allTypes";
+import ActiveUsers from "../components/ActiveUsers";
 
 export default function CanvasBoard() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -23,6 +24,13 @@ export default function CanvasBoard() {
   const toolRef = useRef<Tool | null>(null);
   const isDrawingRef = useRef<boolean>(false);
   const lastPointRef = useRef<Point | null>(null);
+  const cursorTimeoutRef = useRef<number | null>(null);
+  const lastCursorCallRef = useRef<number>(0);
+  const cursorTimeouts = useRef<Map<string, number>>(new Map());
+
+  const pendingDrawActions = useRef<DrawAction[]>([]);
+  const lastBatchSent = useRef<number>(0);
+  const batchTimeoutRef = useRef<number | null>(null);
 
   const [remoteCursors, setRemoteCursors] = useState<
     Map<string, RemoteCursorState>
@@ -69,6 +77,68 @@ export default function CanvasBoard() {
     });
   };
 
+  const throttledCursorMove = useCallback((point: Point) => {
+    const now = Date.now();
+    const timeSinceLastCall = now - lastCursorCallRef.current;
+    const delay = PERFORMANCE_CONFIG.CURSOR_THROTTLE_MS;
+
+    if (timeSinceLastCall >= delay) {
+      lastCursorCallRef.current = now;
+      socketClient.emitCursorMove(point);
+    } else {
+      if (cursorTimeoutRef.current) {
+        clearTimeout(cursorTimeoutRef.current);
+      }
+      cursorTimeoutRef.current = setTimeout(() => {
+        lastCursorCallRef.current = Date.now();
+        socketClient.emitCursorMove(point);
+        cursorTimeoutRef.current = null;
+      }, delay - timeSinceLastCall);
+    }
+  }, []);
+
+  const batchDrawAction = useCallback((action: DrawAction) => {
+    pendingDrawActions.current.push(action);
+
+    const now = Date.now();
+    const timeSinceBatch = now - lastBatchSent.current;
+    const batchDelay =
+      action.type === "draw" ? PERFORMANCE_CONFIG.BATCH_INTERVAL_MS : 0;
+
+    const isMaxSize =
+      pendingDrawActions.current.length >= PERFORMANCE_CONFIG.BATCH_MAX_SIZE;
+
+    if (action.type === "start" || action.type === "end" || isMaxSize) {
+      flushBatch();
+    } else if (timeSinceBatch >= batchDelay) {
+      flushBatch();
+    } else if (!batchTimeoutRef.current) {
+      batchTimeoutRef.current = setTimeout(
+        flushBatch,
+        batchDelay - timeSinceBatch,
+      );
+    }
+  }, []);
+
+  const flushBatch = useCallback(() => {
+    if (pendingDrawActions.current.length === 0) return;
+
+    if (batchTimeoutRef.current) {
+      clearTimeout(batchTimeoutRef.current);
+      batchTimeoutRef.current = null;
+    }
+
+    const actions = [...pendingDrawActions.current];
+    pendingDrawActions.current = [];
+    lastBatchSent.current = Date.now();
+
+    if (actions.length === 1) {
+      socketClient.emitDrawAction(actions[0]);
+    } else {
+      socketClient.emitDrawActionBatch(actions);
+    }
+  }, []);
+
   // Initialize canvas
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -97,6 +167,13 @@ export default function CanvasBoard() {
       applyRemoteAction(action);
     });
 
+    socketClient.onDrawActionBatch((batch) => {
+      batch.actions.forEach((action) => {
+        if (action.userId === socketClient.userId) return;
+        applyRemoteAction(action);
+      });
+    });
+
     socketClient.onCanvasState((state) => {
       state.actions.forEach((action) => applyRemoteAction(action));
       setCanUndo(state.actions.length > 0);
@@ -110,6 +187,12 @@ export default function CanvasBoard() {
 
     socketClient.onCursorMove((data) => {
       if (data.userId === socketClient.userId) return;
+
+      const existingTimeout = cursorTimeouts.current.get(data.userId);
+      if (existingTimeout) {
+        clearTimeout(existingTimeout);
+      }
+
       setRemoteCursors((prev) => {
         const updated = new Map(prev);
         updated.set(data.userId, {
@@ -119,7 +202,7 @@ export default function CanvasBoard() {
         return updated;
       });
 
-      setTimeout(() => {
+      const timeoutId = setTimeout(() => {
         setRemoteCursors((prev) => {
           const updated = new Map(prev);
           if (updated.get(data.userId)?.timestamp === data.timestamp) {
@@ -127,7 +210,9 @@ export default function CanvasBoard() {
           }
           return updated;
         });
-      }, 2000);
+        cursorTimeouts.current.delete(data.userId);
+      }, PERFORMANCE_CONFIG.CURSOR_TIMEOUT_MS);
+      cursorTimeouts.current.set(data.userId, timeoutId);
     });
 
     socketClient.onUserJoined((data) => {
@@ -167,6 +252,7 @@ export default function CanvasBoard() {
     });
 
     return () => {
+      flushBatch();
       socketClient.disconnect();
     };
   }, []);
@@ -176,6 +262,29 @@ export default function CanvasBoard() {
     toolRef.current?.onCancel?.();
     toolRef.current = createTool(toolType, ctxRef.current, { color, width });
   }, [toolType, color, width]);
+
+  useEffect(() => {
+    return () => {
+      if (batchTimeoutRef.current) {
+        clearTimeout(batchTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (cursorTimeoutRef.current) {
+        clearTimeout(cursorTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      cursorTimeouts.current.forEach((timeout) => clearTimeout(timeout));
+      cursorTimeouts.current.clear();
+    };
+  }, []);
 
   const handlePointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
     if (!toolRef.current || !canvasRef.current) return;
@@ -202,13 +311,13 @@ export default function CanvasBoard() {
     if (!toolRef.current || !canvasRef.current) return;
 
     const point = getCanvasPoint(e, canvasRef.current);
+    throttledCursorMove(point);
 
-    socketClient.emitCursorMove(point);
     if (!isDrawingRef.current) return;
 
     toolRef.current.onMove(point);
 
-    socketClient.emitDrawAction({
+    batchDrawAction({
       type: "draw",
       toolType,
       point,
@@ -226,12 +335,14 @@ export default function CanvasBoard() {
     toolRef.current.onEnd();
     isDrawingRef.current = false;
 
-    socketClient.emitDrawAction({
+    pendingDrawActions.current.push({
       type: "end",
       toolType,
       point,
       config: { color, width },
     });
+
+    flushBatch();
 
     lastPointRef.current = null;
     setCanRedo(false);

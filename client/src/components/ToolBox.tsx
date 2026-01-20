@@ -1,5 +1,5 @@
-import { TOOL_TYPES } from "../canvas/tools.js";
-import { ToolBoxProps } from "../types/allTypes.js";
+import { TOOL_TYPES } from "../canvas/tools";
+import { ToolBoxProps } from "../types/allTypes";
 import { HiMiniPaintBrush } from "react-icons/hi2";
 import { BsEraserFill } from "react-icons/bs";
 

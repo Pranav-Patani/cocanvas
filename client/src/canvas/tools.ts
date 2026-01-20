@@ -1,7 +1,5 @@
-// src/canvas/tools/tools.js
-
-import { drawDot, drawSegment } from "./canvasEngine.js";
-import { Point, ToolConfig, Tool } from "../types/allTypes.js";
+import { drawDot, drawBatchedSegments } from "./canvasEngine";
+import { Point, ToolConfig, Tool } from "../types/allTypes";
 
 export const TOOL_TYPES = {
   BRUSH: "brush",
@@ -26,9 +24,12 @@ function applyEraserStyle(
   ctx.lineWidth = width;
 }
 
-/*
-  Tools are plain objects. They can keep their own internal state via closure variables (lastPoint, startPoint, etc.)
-*/
+function drawSegment(ctx: CanvasRenderingContext2D, from: Point, to: Point) {
+  ctx.beginPath();
+  ctx.moveTo(from.x, from.y);
+  ctx.lineTo(to.x, to.y);
+  ctx.stroke();
+}
 
 export function createTool(
   toolType: string,
@@ -38,24 +39,42 @@ export function createTool(
   if (!ctx) throw new Error("ctx required");
 
   let lastPoint: Point | null = null;
+  let strokePoints: Point[] = [];
 
   const eraserConfig: Tool = {
     type: TOOL_TYPES.ERASER,
     onStart(point: Point) {
       applyEraserStyle(ctx, config);
       lastPoint = point;
+      strokePoints = [point];
       drawDot(ctx, point);
     },
     onMove(point: Point) {
       if (!lastPoint) return;
+
       drawSegment(ctx, lastPoint, point);
+
+      strokePoints.push(point);
       lastPoint = point;
     },
     onEnd() {
       lastPoint = null;
+      strokePoints = [];
     },
     onCancel() {
       lastPoint = null;
+      strokePoints = [];
+    },
+
+    replayStroke(points: Point[]) {
+      if (points.length === 0) return;
+      applyEraserStyle(ctx, config);
+
+      if (points.length === 1) {
+        drawDot(ctx, points[0]);
+      } else {
+        drawBatchedSegments(ctx, points);
+      }
     },
   };
 
@@ -64,18 +83,35 @@ export function createTool(
     onStart(point: Point) {
       applyBrushStyle(ctx, config);
       lastPoint = point;
+      strokePoints = [point];
       drawDot(ctx, point);
     },
     onMove(point: Point) {
       if (!lastPoint) return;
+
       drawSegment(ctx, lastPoint, point);
+
+      strokePoints.push(point);
       lastPoint = point;
     },
     onEnd() {
       lastPoint = null;
+      strokePoints = [];
     },
     onCancel() {
       lastPoint = null;
+      strokePoints = [];
+    },
+
+    replayStroke(points: Point[]) {
+      if (points.length === 0) return;
+      applyBrushStyle(ctx, config);
+
+      if (points.length === 1) {
+        drawDot(ctx, points[0]);
+      } else {
+        drawBatchedSegments(ctx, points);
+      }
     },
   };
 
