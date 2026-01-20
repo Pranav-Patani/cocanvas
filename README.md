@@ -36,6 +36,13 @@ The application will be available at `http://localhost:3000` (or the configured 
 3. Start drawing in any window to see real-time synchronization across all instances
 4. User cursors are visible to all connected participants
 
+### 🛜 Local Network Testing
+
+- The backend allows connections from `http://localhost:5173`.
+- For testing across devices on the same Wi-Fi network, it also allows LAN origins like:
+  `http://192.168.x.x:5173`, `http://10.x.x.x:5173`, `http://172.16-31.x.x:5173`
+- In production, CORS is restricted to the deployed frontend URL.
+
 ## ⚠️ Known Limitations & Bugs
 
 - **No Authentication**: Anyone with the URL can join and draw
