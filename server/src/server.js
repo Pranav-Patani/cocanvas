@@ -9,7 +9,7 @@ const io = new Server(server, {
   cors: {
     origin: [
       "http://localhost:5173",
-      "http://192.168.1.0/24", // Allow entire local network
+      "http://192.168.1.0/24",
       /^http:\/\/192\.168\.\d+\.\d+:5173$/,
       /^http:\/\/10\.\d+\.\d+\.\d+:5173$/,
       /^http:\/\/172\.(1[6-9]|2[0-9]|3[0-1])\.\d+\.\d+:5173$/,

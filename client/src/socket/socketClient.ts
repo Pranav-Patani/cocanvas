@@ -27,12 +27,19 @@ class SocketClient {
   }
 
   connect(roomId: string = "default") {
-    const serverUrl =
-      window.location.hostname === "localhost"
-        ? "http://localhost:8000"
-        : `http://${window.location.hostname}:8000`;
+    const getServerUrl = () => {
+      const envUrl = import.meta.env.VITE_SERVER_URL;
+      if (envUrl) return envUrl;
 
-    this.socket = io(serverUrl, {
+      const host = window.location.hostname;
+
+      if (host === "localhost") return "http://localhost:8000";
+
+      return `http://${host}:8000`;
+    };
+
+    this.socket = io(getServerUrl(), {
+      transports: ["websocket"],
       query: { roomId },
     });
     this.userId = this.socket.id;
