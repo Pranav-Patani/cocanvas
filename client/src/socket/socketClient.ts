@@ -150,6 +150,22 @@ class SocketClient {
     this.socket?.on("state-update", callback);
   }
 
+  emitReset() {
+    if (!this.socket) return;
+    this.socket.emit("reset");
+  }
+
+  onResetDone(
+    callback: (result: {
+      success: boolean;
+      canUndo: boolean;
+      canRedo: boolean;
+    }) => void,
+  ) {
+    if (!this.socket) return;
+    this.socket.on("reset-done", callback);
+  }
+
   disconnect() {
     if (this.socket) {
       this.socket.disconnect();

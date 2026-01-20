@@ -17,6 +17,7 @@ import {
   UserData,
 } from "../types/allTypes";
 import ActiveUsers from "../components/ActiveUsers";
+import SideBar from "../components/SideBar";
 
 export default function CanvasBoard() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -251,6 +252,17 @@ export default function CanvasBoard() {
       }
     });
 
+    socketClient.onResetDone((result) => {
+      setCanUndo(result.canUndo);
+      setCanRedo(result.canRedo);
+
+      if (result.success && ctxRef.current && canvasRef.current) {
+        const canvas = canvasRef.current;
+        const ctx = ctxRef.current;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+    });
+
     return () => {
       flushBatch();
       socketClient.disconnect();
@@ -357,6 +369,16 @@ export default function CanvasBoard() {
     socketClient.emitRedo();
   };
 
+  const handleReset = () => {
+    if (
+      window.confirm(
+        "Are you sure you want to clear the canvas? This will affect all users.",
+      )
+    ) {
+      socketClient.emitReset();
+    }
+  };
+
   const getCursorStyle = () => {
     switch (toolType) {
       case TOOL_TYPES.BRUSH:
@@ -370,7 +392,8 @@ export default function CanvasBoard() {
 
   return (
     <div className="canvas-container">
-      <ToolBox
+      <SideBar
+        users={activeUsers}
         toolType={toolType}
         setToolType={setToolType}
         color={color}
@@ -381,6 +404,7 @@ export default function CanvasBoard() {
         onRedo={handleRedo}
         canUndo={canUndo}
         canRedo={canRedo}
+        onReset={handleReset}
       />
 
       <canvas
@@ -392,8 +416,6 @@ export default function CanvasBoard() {
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerUp}
       />
-
-      <ActiveUsers users={activeUsers} />
 
       <RemoteCursors remoteCursors={remoteCursors} activeUsers={activeUsers} />
     </div>

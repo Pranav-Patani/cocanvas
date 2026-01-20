@@ -71,11 +71,16 @@ export interface ToolBoxProps {
   onRedo: () => void;
   canUndo: boolean;
   canRedo: boolean;
+  onReset?: () => void;
 }
 
 export interface RemoteCursorsProps {
   remoteCursors: Map<string, RemoteCursorState>;
   activeUsers: UserData[];
+}
+
+export interface SideBarProps extends ToolBoxProps {
+  users: UserData[];
 }
 
 // ============================================

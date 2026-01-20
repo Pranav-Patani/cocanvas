@@ -139,6 +139,11 @@ io.on("connection", (socket) => {
     io.to(roomId).emit("redo-done", result);
   });
 
+  socket.on("reset", () => {
+    const result = roomManager.reset(roomId);
+    io.to(roomId).emit("reset-done", result);
+  });
+
   socket.on("disconnect", () => {
     console.log(`User ${userId} disconnected`);
     const room = roomManager.rooms.get(roomId);

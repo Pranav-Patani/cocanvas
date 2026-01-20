@@ -98,6 +98,21 @@ class RoomManager {
 
     return room.drawingState.redo();
   }
+
+  reset(roomId) {
+    const room = this.rooms.get(roomId);
+    if (!room) return { success: false };
+
+    room.drawingState.actions = [];
+    room.drawingState.currentStep = 0;
+    room.drawingState.redoStack = [];
+
+    return {
+      success: true,
+      canUndo: false,
+      canRedo: false,
+    };
+  }
 }
 
 module.exports = RoomManager;
