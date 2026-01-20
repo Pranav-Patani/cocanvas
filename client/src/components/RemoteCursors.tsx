@@ -6,7 +6,7 @@ export default function RemoteCursors({
 }: RemoteCursorsProps) {
   return (
     <>
-      {Array.from(remoteCursors.entries()).map(([userId, data]) => {
+      {Array.from(remoteCursors?.entries()).map(([userId, data]) => {
         const user = activeUsers.find((u) => u.userId === userId);
         const userColor = user?.color || "#999";
         return (
@@ -26,7 +26,7 @@ export default function RemoteCursors({
               className="remote-cursor-label"
               style={{ backgroundColor: userColor }}
             >
-              {userId.substring(0, 8)}
+              {user?.userName}
             </span>
           </div>
         );

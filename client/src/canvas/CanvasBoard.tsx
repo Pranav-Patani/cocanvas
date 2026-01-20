@@ -31,7 +31,7 @@ export default function CanvasBoard() {
   const [canUndo, setCanUndo] = useState<boolean>(false);
   const [canRedo, setCanRedo] = useState<boolean>(false);
   const [toolType, setToolType] = useState<string>(TOOL_TYPES.BRUSH);
-  const [color, setColor] = useState<string>("#000");
+  const [color, setColor] = useState<string>("#000000");
   const [width, setWidth] = useState<number>(6);
 
   const applyRemoteAction = (action: DrawAction) => {
@@ -94,7 +94,6 @@ export default function CanvasBoard() {
 
     socketClient.onDrawAction((action) => {
       if (action.userId === socketClient.userId) return;
-
       applyRemoteAction(action);
     });
 
@@ -110,6 +109,7 @@ export default function CanvasBoard() {
     });
 
     socketClient.onCursorMove((data) => {
+      if (data.userId === socketClient.userId) return;
       setRemoteCursors((prev) => {
         const updated = new Map(prev);
         updated.set(data.userId, {
@@ -132,18 +132,11 @@ export default function CanvasBoard() {
 
     socketClient.onUserJoined((data) => {
       console.log("User joined:", data);
-      setActiveUsers((prev) => {
-        if (prev.some((u) => u.userId === data.userId)) return prev;
-        return [
-          ...prev,
-          { userId: data.userId, color: data.color, joinedAt: data.timestamp },
-        ];
-      });
     });
 
     socketClient.onUserLeft((data) => {
       console.log("User left:", data);
-      setActiveUsers((prev) => prev.filter((u) => u.userId !== data.userId));
+
       setRemoteCursors((prev) => {
         const updated = new Map(prev);
         updated.delete(data.userId);

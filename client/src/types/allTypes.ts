@@ -83,6 +83,7 @@ export interface RemoteCursorsProps {
 
 export interface UserData {
   userId: string;
+  userName: string;
   color: string;
   joinedAt: number;
 }

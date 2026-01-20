@@ -27,6 +27,17 @@ class RoomManager {
     );
   }
 
+  updateUserName(roomId, userId, userName) {
+    if (this.rooms.has(roomId)) {
+      const room = this.rooms.get(roomId);
+      if (room.users.has(userId)) {
+        const user = room.users.get(userId);
+        user.userName = userName;
+        room.users.set(userId, user);
+      }
+    }
+  }
+
   removeUser(roomId, userId) {
     const room = this.rooms.get(roomId);
     if (!room) return;
@@ -48,6 +59,7 @@ class RoomManager {
 
     return Array.from(room.users.entries()).map(([userId, userData]) => ({
       userId,
+      userName: userData.userName,
       color: userData.color,
       joinedAt: userData.joinedAt,
     }));

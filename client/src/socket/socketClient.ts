@@ -1,5 +1,11 @@
 import { io, Socket } from "socket.io-client";
 import {
+  uniqueNamesGenerator,
+  adjectives,
+  colors,
+  animals,
+} from "unique-names-generator";
+import {
   DrawAction,
   CursorData,
   CanvasState,
@@ -11,24 +17,35 @@ import {
 
 class SocketClient {
   socket: Socket | null;
-  userId: string;
+  userId: string | null;
+  userName: string | null;
 
   constructor() {
     this.socket = null;
-    this.userId = this.generateUserId();
-  }
-
-  generateUserId() {
-    return `user_${Math.random().toString(36).substr(2, 9)}`;
+    this.userId = null;
+    this.userName = null;
   }
 
   connect(roomId: string = "default") {
     this.socket = io("http://localhost:8000", {
-      query: { roomId, userId: this.userId },
+      query: { roomId },
+    });
+    this.userId = this.socket.id;
+    this.userName = uniqueNamesGenerator({
+      dictionaries: [adjectives, colors, animals],
+      style: "capital",
+      separator: " ",
+      length: 2,
     });
 
     this.socket.on("connect", () => {
-      console.log("Connected to server");
+      this.userId = this.socket.id;
+      console.log("Connected with ID:", this.userId, "Name:", this.userName);
+
+      this.socket.emit("user-data", {
+        id: this.userId,
+        userName: this.userName,
+      });
     });
 
     return this.socket;
@@ -39,7 +56,6 @@ class SocketClient {
 
     this.socket.emit("draw-action", {
       ...action,
-      userId: this.userId,
       timestamp: Date.now(),
     });
   }
@@ -48,7 +64,6 @@ class SocketClient {
     if (!this.socket) return;
 
     this.socket.emit("cursor-move", {
-      userId: this.userId,
       point,
       timestamp: Date.now(),
     });

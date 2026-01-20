@@ -31,7 +31,8 @@ const generateUserColor = (userId) => {
 };
 
 io.on("connection", (socket) => {
-  const { roomId, userId } = socket.handshake.query;
+  const { roomId } = socket.handshake.query;
+  const userId = socket.id;
 
   console.log(`User ${userId} connected to room ${roomId}`);
 
@@ -40,8 +41,25 @@ io.on("connection", (socket) => {
 
   roomManager.addUser(roomId, userId, socket.id, userColor);
 
+  socket.emit("init", {
+    userId,
+    roomId,
+    color: userColor,
+  });
+
+  socket.on("user-data", (userData) => {
+    roomManager.updateUserName(roomId, userId, userData.userName);
+
+    const updatedUsers = roomManager.getUsers(roomId);
+
+    io.to(roomId).emit("users-update", updatedUsers);
+  });
+
   const canvasState = roomManager.getCanvasState(roomId);
   socket.emit("canvas-state", canvasState);
+
+  const existingUsers = roomManager.getUsers(roomId);
+  socket.emit("users-update", existingUsers);
 
   socket.to(roomId).emit("user-joined", {
     userId,
@@ -49,11 +67,10 @@ io.on("connection", (socket) => {
     timestamp: Date.now(),
   });
 
-  const existingUsers = roomManager.getUsers(roomId);
-  socket.emit("users-update", existingUsers);
+  io.to(roomId).emit("users-update", existingUsers);
 
   socket.on("draw-action", (action) => {
-    const fullAction = { ...action, userId: socket.id };
+    const fullAction = { ...action, userId };
     const actionId = roomManager.addAction(roomId, fullAction);
 
     socket.to(roomId).emit("draw-action", {
@@ -95,6 +112,9 @@ io.on("connection", (socket) => {
       userId,
       timestamp: Date.now(),
     });
+
+    const remainingUsers = roomManager.getUsers(roomId);
+    socket.to(roomId).emit("users-update", remainingUsers);
   });
 });
 

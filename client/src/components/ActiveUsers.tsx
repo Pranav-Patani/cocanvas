@@ -32,7 +32,7 @@ export default function ActiveUsers({ users }: { users: UserData[] }) {
                 className="active-users-id"
                 style={{ fontWeight: isCurrentUser ? 600 : 400 }}
               >
-                {user.userId.substring(0, 10)}
+                {user.userName}
                 {isCurrentUser && (
                   <span className="active-users-current">(You)</span>
                 )}
