@@ -92,13 +92,91 @@ body,
 }
 
 .tool-button {
-  padding: 0.2rem 0.5rem;
-  background-color: var(--secondary-color);
-  border: 0.1rem solid var(--text-color);
+  padding: 0.1rem 0.5rem;
+  border: 0.1rem solid var(--dark-secondary-color);
+  border-radius: 0.4rem;
+  box-shadow: 0 0.1rem 0.4rem var(--shadow-dark);
+  background-color: transparent;
   cursor: pointer;
+  transition: all 0.2s;
 }
 .tool-button.active {
-  background-color: var(--dark-secondary-color);
+  background-color: var(--secondary-color);
+}
+
+.tool-icon {
+  font-size: 1.8rem;
+  color: var(--text-color);
+}
+
+.color-picker {
+  border-radius: 50%;
+  width: 3rem;
+  height: 3rem;
+  padding: 0.2rem;
+  border: 0.2rem solid var(--dark-secondary-color);
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.color-picker::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.color-picker::-webkit-color-swatch {
+  border-radius: 50%;
+  border: none;
+}
+
+.color-picker::-moz-color-swatch {
+  border-radius: 50%;
+  border: none;
+}
+
+.preset-colors {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.8rem;
+}
+
+.preset-color {
+  width: 2rem;
+  height: 2rem;
+  padding: 0.2rem 0.5rem;
+  border: 0.1rem solid var(--dark-secondary-color);
+  border-radius: 0.4rem;
+  box-shadow: 0 0.1rem 0.4rem var(--shadow-dark);
+  background-color: transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.history-buttons {
+  margin: auto auto 0;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.history-button {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.2rem 0.5rem;
+  border: 0.1rem solid var(--dark-secondary-color);
+  border-radius: 0.4rem;
+  box-shadow: 0 0.1rem 0.4rem var(--shadow-dark);
+  background-color: transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.history-button:disabled {
+  cursor: not-allowed;
+  border: 0.1rem solid var(--secondary-color);
+}
+
+.history-icon {
+  font-size: 1.6rem;
 }
 
 /* Remote Cursor */

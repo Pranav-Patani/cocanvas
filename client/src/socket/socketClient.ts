@@ -84,6 +84,32 @@ class SocketClient {
     this.socket.on("users-update", callback);
   }
 
+  emitUndo() {
+    if (!this.socket) return;
+    this.socket.emit("undo");
+  }
+
+  emitRedo() {
+    if (!this.socket) return;
+    this.socket.emit("redo");
+  }
+
+  onUndoDone(callback: (result: any) => void) {
+    if (!this.socket) return;
+    this.socket.on("undo-done", callback);
+  }
+
+  onRedoDone(callback: (result: any) => void) {
+    if (!this.socket) return;
+    this.socket.on("redo-done", callback);
+  }
+
+  onStateUpdate(
+    callback: (state: { canUndo: boolean; canRedo: boolean }) => void,
+  ) {
+    this.socket?.on("state-update", callback);
+  }
+
   disconnect() {
     if (this.socket) {
       this.socket.disconnect();

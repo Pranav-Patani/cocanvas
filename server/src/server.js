@@ -37,6 +37,7 @@ io.on("connection", (socket) => {
 
   socket.join(roomId);
   const userColor = generateUserColor(userId);
+
   roomManager.addUser(roomId, userId, socket.id, userColor);
 
   const canvasState = roomManager.getCanvasState(roomId);
@@ -52,12 +53,21 @@ io.on("connection", (socket) => {
   socket.emit("users-update", existingUsers);
 
   socket.on("draw-action", (action) => {
-    const actionId = roomManager.addAction(roomId, action);
+    const fullAction = { ...action, userId: socket.id };
+    const actionId = roomManager.addAction(roomId, fullAction);
 
     socket.to(roomId).emit("draw-action", {
-      ...action,
+      ...fullAction,
       actionId,
     });
+
+    if (action.type === "end") {
+      const state = roomManager.getCanvasState(roomId);
+      socket.to(roomId).emit("state-update", {
+        canUndo: state.canUndo,
+        canRedo: state.canRedo,
+      });
+    }
   });
 
   socket.on("cursor-move", (data) => {
@@ -66,6 +76,16 @@ io.on("connection", (socket) => {
       point: data.point,
       timestamp: data.timestamp,
     });
+  });
+
+  socket.on("undo", () => {
+    const result = roomManager.undo(roomId);
+    io.to(roomId).emit("undo-done", result);
+  });
+
+  socket.on("redo", () => {
+    const result = roomManager.redo(roomId);
+    io.to(roomId).emit("redo-done", result);
   });
 
   socket.on("disconnect", () => {

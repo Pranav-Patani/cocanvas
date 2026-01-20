@@ -66,6 +66,10 @@ export interface ToolBoxProps {
   setColor: (color: string) => void;
   width: number;
   setWidth: (width: number) => void;
+  onUndo: () => void;
+  onRedo: () => void;
+  canUndo: boolean;
+  canRedo: boolean;
 }
 
 export interface RemoteCursorsProps {

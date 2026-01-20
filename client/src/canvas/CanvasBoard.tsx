@@ -28,7 +28,8 @@ export default function CanvasBoard() {
     Map<string, RemoteCursorState>
   >(new Map());
   const [activeUsers, setActiveUsers] = useState<UserData[]>([]);
-
+  const [canUndo, setCanUndo] = useState<boolean>(false);
+  const [canRedo, setCanRedo] = useState<boolean>(false);
   const [toolType, setToolType] = useState<string>(TOOL_TYPES.BRUSH);
   const [color, setColor] = useState<string>("#000");
   const [width, setWidth] = useState<number>(6);
@@ -53,6 +54,19 @@ export default function CanvasBoard() {
         remoteTool.onEnd();
         break;
     }
+  };
+
+  const replayActions = (actions: DrawAction[]) => {
+    if (!ctxRef.current || !canvasRef.current) return;
+
+    const canvas = canvasRef.current;
+    const ctx = ctxRef.current;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    actions.forEach((action) => {
+      applyRemoteAction(action);
+    });
   };
 
   // Initialize canvas
@@ -86,6 +100,13 @@ export default function CanvasBoard() {
 
     socketClient.onCanvasState((state) => {
       state.actions.forEach((action) => applyRemoteAction(action));
+      setCanUndo(state.actions.length > 0);
+      setCanRedo(false);
+    });
+
+    socketClient.onStateUpdate((state) => {
+      setCanUndo(state.canUndo);
+      setCanRedo(state.canRedo);
     });
 
     socketClient.onCursorMove((data) => {
@@ -131,8 +152,25 @@ export default function CanvasBoard() {
     });
 
     socketClient.onUsersUpdate((users) => {
-      console.log("Users update:", users);
       setActiveUsers(users);
+    });
+
+    socketClient.onUndoDone((result) => {
+      setCanUndo(result.canUndo);
+      setCanRedo(result.canRedo);
+
+      if (result.success) {
+        replayActions(result.actions);
+      }
+    });
+
+    socketClient.onRedoDone((result) => {
+      setCanUndo(result.canUndo);
+      setCanRedo(result.canRedo);
+
+      if (result.success) {
+        replayActions(result.actions);
+      }
     });
 
     return () => {
@@ -203,6 +241,16 @@ export default function CanvasBoard() {
     });
 
     lastPointRef.current = null;
+    setCanRedo(false);
+    setCanUndo(true);
+  };
+
+  const handleUndo = () => {
+    socketClient.emitUndo();
+  };
+
+  const handleRedo = () => {
+    socketClient.emitRedo();
   };
 
   const getCursorStyle = () => {
@@ -225,6 +273,10 @@ export default function CanvasBoard() {
         setColor={setColor}
         width={width}
         setWidth={setWidth}
+        onUndo={handleUndo}
+        onRedo={handleRedo}
+        canUndo={canUndo}
+        canRedo={canRedo}
       />
 
       <canvas
