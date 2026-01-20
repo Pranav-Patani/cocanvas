@@ -4,7 +4,6 @@ import {
   resizeCanvasToDisplaySize,
   getCanvasPoint,
 } from "./canvasEngine";
-import ToolBox from "../components/ToolBox";
 import RemoteCursors from "../components/RemoteCursors";
 import { createTool, TOOL_TYPES } from "./tools";
 import socketClient from "../socket/socketClient";
@@ -16,7 +15,6 @@ import {
   Tool,
   UserData,
 } from "../types/allTypes";
-import ActiveUsers from "../components/ActiveUsers";
 import SideBar from "../components/SideBar";
 
 export default function CanvasBoard() {
@@ -47,6 +45,7 @@ export default function CanvasBoard() {
     if (!ctxRef.current) return;
 
     const ctx = ctxRef.current;
+    ctx.save();
     const remoteTool = createTool(action.toolType, ctx, action.config);
 
     switch (action.type) {
@@ -63,6 +62,7 @@ export default function CanvasBoard() {
         remoteTool.onEnd();
         break;
     }
+    ctx.restore();
   };
 
   const replayActions = (actions: DrawAction[]) => {
