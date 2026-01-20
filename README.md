@@ -11,6 +11,10 @@ A real-time collaborative drawing application that allows multiple users to draw
 - 👥 Active user list with automatic user color and user name assignment
 - ↩️ Global Undo / Redo (shared across all users)
 
+## 📸 Screenshots
+
+![CoCanvas Preview](./assets/preview.png)
+
 ## 🧰 Tech Stack
 
 - **Frontend:** React + TypeScript + Canvas API
