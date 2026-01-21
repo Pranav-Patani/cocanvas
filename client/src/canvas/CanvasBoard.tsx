@@ -16,6 +16,7 @@ import {
   UserData,
 } from "../types/allTypes";
 import SideBar from "../components/SideBar";
+import logo from "/logo.png";
 
 export default function CanvasBoard() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -40,6 +41,8 @@ export default function CanvasBoard() {
   const [toolType, setToolType] = useState<string>(TOOL_TYPES.BRUSH);
   const [color, setColor] = useState<string>("#000000");
   const [width, setWidth] = useState<number>(6);
+  const [isConnected, setIsConnected] = useState<boolean>(false);
+  const [isLoadingCanvas, setIsLoadingCanvas] = useState<boolean>(true);
 
   const applyRemoteAction = (action: DrawAction) => {
     if (!ctxRef.current) return;
@@ -163,6 +166,19 @@ export default function CanvasBoard() {
   useEffect(() => {
     socketClient.connect();
 
+    const handleConnect = () => {
+      console.log("Socket connected");
+      setIsConnected(true);
+    };
+
+    const handleDisconnect = () => {
+      console.log("Socket disconnected");
+      setIsConnected(false);
+    };
+
+    socketClient.socket?.on("connect", handleConnect);
+    socketClient.socket?.on("disconnect", handleDisconnect);
+
     socketClient.onDrawAction((action) => {
       if (action.userId === socketClient.userId) return;
       applyRemoteAction(action);
@@ -179,6 +195,7 @@ export default function CanvasBoard() {
       state.actions.forEach((action) => applyRemoteAction(action));
       setCanUndo(state.actions.length > 0);
       setCanRedo(false);
+      setIsLoadingCanvas(false);
     });
 
     socketClient.onStateUpdate((state) => {
@@ -265,6 +282,8 @@ export default function CanvasBoard() {
 
     return () => {
       flushBatch();
+      socketClient.socket?.off("connect", handleConnect);
+      socketClient.socket?.off("disconnect", handleDisconnect);
       socketClient.disconnect();
     };
   }, []);
@@ -390,8 +409,19 @@ export default function CanvasBoard() {
     }
   };
 
+  const isLoading = !isConnected || isLoadingCanvas;
+
   return (
     <div className="canvas-container">
+      {isLoading && (
+        <div className="loading-overlay">
+          <div className="loading-spinner">
+            <img src={logo} alt="Loading..." />
+            <div className="spinner"></div>
+            <p>Connecting to CoCanvas...</p>
+          </div>
+        </div>
+      )}
       <SideBar
         users={activeUsers}
         toolType={toolType}
