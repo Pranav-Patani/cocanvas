@@ -16,7 +16,7 @@ import {
   UserData,
 } from "../types/allTypes";
 import SideBar from "../components/SideBar";
-import logo from "/logo.png";
+import Loading from "../components/Loading";
 
 export default function CanvasBoard() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -413,15 +413,8 @@ export default function CanvasBoard() {
 
   return (
     <div className="canvas-container">
-      {isLoading && (
-        <div className="loading-overlay">
-          <div className="loading-spinner">
-            <img src={logo} alt="Loading..." />
-            <div className="spinner"></div>
-            <p>Connecting to CoCanvas...</p>
-          </div>
-        </div>
-      )}
+      <Loading isLoading={isLoading} />
+
       <SideBar
         users={activeUsers}
         toolType={toolType}
