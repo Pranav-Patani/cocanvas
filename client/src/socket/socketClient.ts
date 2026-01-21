@@ -41,6 +41,8 @@ class SocketClient {
     this.socket = io(getServerUrl(), {
       transports: ["websocket"],
       query: { roomId },
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
     });
     this.userId = this.socket.id;
     this.userName = uniqueNamesGenerator({

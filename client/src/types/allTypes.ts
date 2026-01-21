@@ -104,3 +104,12 @@ export interface UserLeftPayload {
   userId: string;
   timestamp: number;
 }
+
+// ============================================
+// Context TYPES
+// ============================================
+
+export interface ErrorContextType {
+  error: string | null;
+  setError: (message: string | null) => void;
+}

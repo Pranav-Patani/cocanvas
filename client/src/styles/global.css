@@ -9,6 +9,9 @@
 
   --tool-box-bg: rgb(250, 250, 250); /* Zinc 1 */
   --shadow-dark: rgba(0, 0, 0, 0.15);
+
+  --error-bg: rgb(255, 226, 226); /* Red 2 */
+  --error-shadow: rgb(255, 162, 162); /* Red 4 */
 }
 
 /* Global Styles */
@@ -343,4 +346,33 @@ body,
 
 .loading-spinner p {
   font-size: 1.4rem;
+}
+
+/* Error Message */
+.error-popup {
+  position: fixed;
+  top: 65%;
+  left: 50%;
+  transform: translate(-50%, -35%);
+  background-color: var(--error-bg);
+  box-shadow: 0 0.2rem 1.2rem var(--error-shadow);
+  padding: 2rem;
+  border-radius: 0.5rem;
+  z-index: 2000;
+}
+
+.error-title {
+  font-size: 1.4rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.error-icon {
+  font-size: 2rem;
+  color: var(--text-color);
+}
+
+.error-message {
+  font-size: 1.2rem;
 }

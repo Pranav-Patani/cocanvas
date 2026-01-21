@@ -17,6 +17,7 @@ import {
 } from "../types/allTypes";
 import SideBar from "../components/SideBar";
 import Loading from "../components/Loading";
+import { useError } from "../context/ErrorContext";
 
 export default function CanvasBoard() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -43,6 +44,8 @@ export default function CanvasBoard() {
   const [width, setWidth] = useState<number>(6);
   const [isConnected, setIsConnected] = useState<boolean>(false);
   const [isLoadingCanvas, setIsLoadingCanvas] = useState<boolean>(true);
+
+  const { setError } = useError();
 
   const applyRemoteAction = (action: DrawAction) => {
     if (!ctxRef.current) return;
@@ -169,6 +172,7 @@ export default function CanvasBoard() {
     const handleConnect = () => {
       console.log("Socket connected");
       setIsConnected(true);
+      setError(null);
     };
 
     const handleDisconnect = () => {
@@ -176,8 +180,16 @@ export default function CanvasBoard() {
       setIsConnected(false);
     };
 
+    const handleConnectError = (error: Error) => {
+      console.error("Connection failed:", error.message);
+      setError(
+        "Failed to connect to the server. Please try again or come back later.",
+      );
+    };
+
     socketClient.socket?.on("connect", handleConnect);
     socketClient.socket?.on("disconnect", handleDisconnect);
+    socketClient.socket?.on("connect_error", handleConnectError);
 
     socketClient.onDrawAction((action) => {
       if (action.userId === socketClient.userId) return;
@@ -284,6 +296,7 @@ export default function CanvasBoard() {
       flushBatch();
       socketClient.socket?.off("connect", handleConnect);
       socketClient.socket?.off("disconnect", handleDisconnect);
+      socketClient.socket?.off("connect_error", handleConnectError);
       socketClient.disconnect();
     };
   }, []);

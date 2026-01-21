@@ -1,40 +1,43 @@
 import { useState, useEffect, useRef } from "react";
 import logo from "/logo.png";
+import { useError } from "../context/ErrorContext";
 
 export default function Loading({ isLoading }: { isLoading: boolean }) {
   const messages = [
-    "Still connecting…",
+    "Connecting to CoCanvas...",
     "Waking up the server 😴",
-    "Almost ready…",
-    "Hold on a sec…",
-    "Sorry for the wait — free hosting needs a quick warm-up sometimes 🙃",
+    "⏳ Booting the server can take a while. Feel free to wait, or come back in 5 minutes — we’ll keep it ready for you.",
   ];
   const [message, setMessage] = useState("Connecting to CoCanvas...");
-  const timeoutRef = useRef<number | null>(null);
   const intervalRef = useRef<number | null>(null);
+  const { error } = useError();
 
   useEffect(() => {
-    timeoutRef.current = setTimeout(() => {
-      let i = 0;
-      setMessage(messages[i]);
-      intervalRef.current = setInterval(() => {
-        i++;
+    if (!isLoading) {
+      setMessage("Connecting to CoCanvas...");
+      return;
+    }
 
-        if (i < messages.length) {
-          setMessage(messages[i]);
-        }
+    let i = 0;
+    setMessage(messages[i]);
+    intervalRef.current = setInterval(() => {
+      i++;
 
-        if (i === messages.length - 1 && intervalRef.current) {
-          clearInterval(intervalRef.current);
-        }
-      }, 5000);
-    }, 5000);
+      if (i < messages.length) {
+        setMessage(messages[i]);
+      }
+
+      if (i === messages.length - 1 && intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    }, 2000);
 
     return () => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, []);
+  }, [isLoading]);
+
+  if (!isLoading) return null;
 
   return (
     <>
@@ -42,8 +45,11 @@ export default function Loading({ isLoading }: { isLoading: boolean }) {
         <div className="loading-overlay">
           <div className="loading-spinner">
             <img src={logo} alt="Loading..." />
-            <div className="spinner"></div>
-            <p>{message}</p>
+            {!error && (
+              <>
+                <div className="spinner"></div> <p>{message}</p>
+              </>
+            )}
           </div>
         </div>
       )}
