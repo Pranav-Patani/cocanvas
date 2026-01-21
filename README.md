@@ -27,7 +27,7 @@ npm install
 npm start
 ```
 
-The application will be available at `http://localhost:3000` (or the configured port).
+The application will be available at `http://localhost:5173` (or the configured port).
 
 ## 🧪 Testing with Multiple Users
 
